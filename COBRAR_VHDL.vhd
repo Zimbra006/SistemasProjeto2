@@ -29,7 +29,7 @@ BEGIN
 		current_state <= waiting;
 		
 	ELSIF (rising_edge(clk) and (enable = '1')) THEN
-	
+	-- Esse componente só começa a rodar quando o controlador da o sinal
 		current_state <= next_state;
 		
 	END IF;
@@ -39,12 +39,16 @@ PROCESS (clk, raise_price)
 	VARIABLE cost : integer := 5;
 BEGIN
 	IF (raise_price = '1') THEN
+	-- quando raise_price é 1, ou seja, quando o módulo da senha diz que o
+	-- usuário é um convidado, aumentamos o preço para 7R$
 		cost := 7;
 	END IF;
 	
 	IF (rising_edge(clk)) THEN
 		CASE current_state IS
 			WHEN waiting =>
+				-- Os inputs de add1 e add2 determinam quanto dinheiro será adicionado
+				-- ao sistema
 				IF (add2 = '1') THEN
 					next_state <= add_2;
 				ELSIF (add1 = '1') THEN
@@ -61,6 +65,10 @@ BEGIN
 					next_state <= waiting;
 				END IF;
 			WHEN paid =>
+			-- Não fizemos aqui o que fizemos no componente da senha pois aqui não precisamos
+			-- que um sinal de output seja constante. No da senha precisamos que ele indique
+			-- constantemente se o usuário é ou não um convidado para este componente funcionar
+			-- corretamente
 				next_state <= waiting;
 			WHEN others =>
 				next_state <= waiting;
@@ -90,3 +98,4 @@ BEGIN
 END PROCESS;
 
 END TypeArchitecture;
+
