@@ -5,7 +5,6 @@ ENTITY main_vhdl IS
   PORT (
  
     CLK_MAIN               : IN  std_logic;                    
-    START_MAIN             : IN  std_logic;
 	 IS_GUEST               : IN  std_logic;
     PASSWORD_MAIN          : IN  std_logic_vector(3 downto 0);
 	 ADD_1_MAIN, ADD_2_MAIN : IN  std_logic;
@@ -24,7 +23,7 @@ ARCHITECTURE TypeArchitecture OF main_vhdl IS
 COMPONENT SENHA_VHDL IS 
 	PORT(
 		-----------------------------------------------------
-		clk, reset, front_sensor, back_sensor, enable, isGuest: in std_logic;
+		clk, reset, enable, isGuest: in std_logic;
 		password: in std_logic_vector(3 downto 0);
 		-----------------------------------------------------
 		Green_led, red_led, done_senha: out std_logic
@@ -48,7 +47,8 @@ COMPONENT CONTROLADOR_VHDL IS
 PORT (
  
     CLK          : IN  std_logic;                    
-    START        : IN  std_logic;
+    FRONT_SENSOR : IN  std_logic;
+	 BACK_SENSOR  : IN  std_logic;
     COMP         : IN  std_logic;                    
     DONE_SENHA   : IN  std_logic;
 	 -----------------------------
@@ -69,23 +69,47 @@ BEGIN
 
 
 u1 : CONTROLADOR_VHDL 
-PORT MAP(CLK => CLK_MAIN, START => START_MAIN, COMP => comparacao, DONE_SENHA => dn_senha,
-RESET_SENHA => rs_senha, RESET_PRICE => rs_price, 
-ENABLE_SENHA => en_senha, ENABLE_PRICE => en_price, ABRINDO => ABERTO,
-LED_SENHA => LED_ETAPA_SENHA, LED_COBRAR => LED_ETAPA_COBRAR);
+PORT MAP(
+-- Sinais de comparação ------
+CLK => CLK_MAIN, 
+FRONT_SENSOR => FT_SENSOR, 
+BACK_SENSOR => BK_SENSOR,
+COMP => comparacao,
+DONE_SENHA => dn_senha,
+-- Sinais de controle do sistema ----
+RESET_SENHA => rs_senha, 
+RESET_PRICE => rs_price, 
+ENABLE_SENHA => en_senha, 
+ENABLE_PRICE => en_price, 
+ABRINDO => ABERTO,
+LED_SENHA => LED_ETAPA_SENHA, 
+LED_COBRAR => LED_ETAPA_COBRAR);
 
 u2 : SENHA_VHDL
-PORT MAP(clk => CLK_MAIN, reset => rs_senha, 
-front_sensor => FT_SENSOR, back_sensor => BK_SENSOR,
-enable => en_senha, isGuest => IS_GUEST,
+PORT MAP(
+-- Inputs --
+clk => CLK_MAIN, 
+reset => rs_senha, 
+enable => en_senha, 
+isGuest => IS_GUEST,
 password => PASSWORD_MAIN,
-Green_led => LED_SENHA_ACEITA, red_led => visitante, done_senha => dn_senha);
+-- Outputs --
+Green_led => LED_SENHA_ACEITA, 
+red_led => visitante, 
+done_senha => dn_senha);
 
 LED_SENHA_NEGADA <= visitante;
 
 u3 : COBRAR_VHDL
-PORT MAP(add1 => ADD_1_MAIN, add2 => ADD_2_MAIN, clk => CLK_MAIN, 
-raise_price => visitante, reset => rs_price, enable => en_price,
+PORT MAP(
+-- Inputs -- 
+add1 => ADD_1_MAIN, 
+add2 => ADD_2_MAIN, 
+clk => CLK_MAIN, 
+raise_price => visitante, 
+reset => rs_price, 
+enable => en_price,
+-- Output --
 opening => comparacao);
 
 
