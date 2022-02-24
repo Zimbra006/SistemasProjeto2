@@ -7,9 +7,12 @@ Entity senha_vhdl is
 
 Port (
 -----------------------------------------------------
-clk, reset, front_sensor, back_sensor, enable, isGuest: in std_logic;
+clk, reset, enable, isGuest: in std_logic;
 password: in std_logic_vector(3 downto 0);
 -----------------------------------------------------
+
+-- O sinal de done_senha existe para indicar para o controlador que esse componente já
+-- terminou sua função
 Green_led, red_led, done_senha: out std_logic);
 
 End senha_vhdl;
@@ -20,7 +23,7 @@ End senha_vhdl;
 
 Architecture TypeArchitecture of senha_vhdl is
 
-TYPE states IS (idle, waiting_password, right_pass, wrong_pass, guest, stop);
+TYPE states IS (idle, waiting_password, right_pass, wrong_pass, guest);
 SIGNAL current_state, next_state: states;
 SIGNAL red_tmp, green_tmp: std_logic;
 SIGNAL counter_wait : std_logic_vector (3 downto 0);
@@ -32,34 +35,28 @@ BEGIN
 PROCESS(clk, reset, enable)
 BEGIN
 	IF (reset = '1') THEN
+	-- Resetamos o circuito quando um novo carro entra
 	
 		current_state <= idle;
 		
 	ELSIF (rising_edge(clk) and (enable = '1')) THEN
-	
+	-- Esse componente só começa a rodar quando o controlador da o sinal
 		current_state <= next_state;
 		
 	END IF;
 END PROCESS;
 
 
-PROCESS(current_state, password, front_sensor, back_sensor, isGuest)
+PROCESS(current_state, password, isGuest)
 BEGIN
 
 	CASE current_state IS
 		WHEN idle =>
-			IF (front_sensor = '1') THEN
 
 				next_state <= waiting_password;
-
-			ELSE
-
-				next_state <= idle;
-
-			END IF;
 			
 		WHEN waiting_password =>
-
+			-- Espera alguns sinais de clock antes de começar a checar pela senha
 			IF (counter_wait >= "0011") THEN
 				IF(password = "0110") THEN
 
@@ -83,19 +80,10 @@ BEGIN
 			
 		WHEN right_pass =>
 
-			IF (back_sensor = '1' and front_sensor='1') THEN
-
-				next_state <= stop;
-
-			ELSIF (back_sensor = '1') THEN
-
-				next_state <= idle;
-
-			ELSE
+			-- Fizemos assim pois dessa forma ele permanece no estado
+			-- onde o output que indica se é convidado é constante
 
 				next_state <= right_pass;
-
-			END IF;
 		
 		WHEN wrong_pass =>
 
@@ -112,22 +100,10 @@ BEGIN
 
 			End if;
 		
-		WHEN stop =>
-
-			IF (password = "0110") THEN
-
-				Next_state <= right_pass;
-
-			ELSIF (isGuest = '1') THEN
-				
-				next_state <= guest;
-			ELSE
-
-				Next_state <= stop;
-
-			END IF;
-		
 		WHEN guest =>
+			-- Fizemos assim pois dessa forma ele permanece no estado
+			-- onde o output que indica se é convidado é constante
+		
 			next_state <= guest;
 
 		END CASE;
@@ -144,6 +120,8 @@ BEGIN
 	ELSIF (rising_edge(clk)) THEN
 
 		IF (current_state = waiting_password) THEN
+		-- Incrementa o contador para a espera da senha utilizando uma soma
+		-- entre vetores unsigned
 
 			counter_wait <= std_logic_vector(unsigned(counter_wait) + unsigned(sum));
 
@@ -198,12 +176,6 @@ IF (rising_edge(clk)) THEN
 			red_tmp <= '1';
 			
 			done_senha <= '1';
-
-		WHEN stop =>
-
-			green_tmp <= '0';
-
-			red_tmp <= '1';
 
 		END CASE;
 
