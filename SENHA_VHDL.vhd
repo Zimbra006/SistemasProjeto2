@@ -34,104 +34,104 @@ BEGIN
 
 PROCESS(clk, reset, enable)
 BEGIN
-	IF (reset = '1') THEN
-	-- Resetamos o circuito quando um novo carro entra
-	
-		current_state <= idle;
-		
-	ELSIF (rising_edge(clk) and (enable = '1')) THEN
-	-- Esse componente só começa a rodar quando o controlador da o sinal
-		current_state <= next_state;
-		
-	END IF;
+ IF (reset = '1') THEN
+ -- Resetamos o circuito quando um novo carro entra
+ 
+  current_state <= idle;
+  
+ ELSIF (rising_edge(clk) and (enable = '1')) THEN
+ -- Esse componente só começa a rodar quando o controlador da o sinal
+  current_state <= next_state;
+  
+ END IF;
 END PROCESS;
 
 
 PROCESS(current_state, password, isGuest)
 BEGIN
 
-	CASE current_state IS
-		WHEN idle =>
+ CASE current_state IS
+  WHEN idle =>
 
-				next_state <= waiting_password;
-			
-		WHEN waiting_password =>
-			-- Espera alguns sinais de clock antes de começar a checar pela senha
-			IF (counter_wait >= "0011") THEN
-				IF(password = "0110") THEN
+    next_state <= waiting_password;
+   
+  WHEN waiting_password =>
+   -- Espera alguns sinais de clock antes de começar a checar pela senha
+   IF (counter_wait >= "0011") THEN
+    IF(password = "0110") THEN
 
-					next_state <= right_pass;
+     next_state <= right_pass;
 
-				ELSE
+    ELSE
 
-					next_state <= wrong_pass;
+     next_state <= wrong_pass;
 
-				END IF;
+    END IF;
 
-			ELSIF (isGuest = '1') THEN
-				
-				next_state <= guest;
-			
-			ELSE
+   ELSIF (isGuest = '1') THEN
+    
+    next_state <= guest;
+   
+   ELSE
 
-				next_state <= waiting_password;
+    next_state <= waiting_password;
 
-			END IF;
-			
-		WHEN right_pass =>
+   END IF;
+   
+  WHEN right_pass =>
 
-			-- Fizemos assim pois dessa forma ele permanece no estado
-			-- onde o output que indica se é convidado é constante
+   -- Fizemos assim pois dessa forma ele permanece no estado
+   -- onde o output que indica se é convidado é constante
 
-				next_state <= right_pass;
-		
-		WHEN wrong_pass =>
+    next_state <= right_pass;
+  
+  WHEN wrong_pass =>
 
-			If (password = "0110") then
+   If (password = "0110") then
 
-				next_state <= right_pass;
+    next_state <= right_pass;
 
-			ELSIF (isGuest = '1') THEN
-				
-				next_state <= guest;
-			ELSE
+   ELSIF (isGuest = '1') THEN
+    
+    next_state <= guest;
+   ELSE
 
-				next_state <= wrong_pass;
+    next_state <= wrong_pass;
 
-			End if;
-		
-		WHEN guest =>
-			-- Fizemos assim pois dessa forma ele permanece no estado
-			-- onde o output que indica se é convidado é constante
-		
-			next_state <= guest;
+   End if;
+  
+  WHEN guest =>
+   -- Fizemos assim pois dessa forma ele permanece no estado
+   -- onde o output que indica se é convidado é constante
+  
+   next_state <= guest;
 
-		END CASE;
+  END CASE;
 
 END PROCESS;
-	
+ 
 PROCESS(clk, reset)
 BEGIN
 
-	IF (reset = '1') THEN
+ IF (reset = '1') THEN
 
-		counter_wait <= (others => '0');
+  counter_wait <= (others => '0');
 
-	ELSIF (rising_edge(clk)) THEN
+ ELSIF (rising_edge(clk)) THEN
 
-		IF (current_state = waiting_password) THEN
-		-- Incrementa o contador para a espera da senha utilizando uma soma
-		-- entre vetores unsigned
+  IF (current_state = waiting_password) THEN
+  -- Incrementa o contador para a espera da senha utilizando uma soma
+  -- entre vetores unsigned
 
-			counter_wait <= std_logic_vector(unsigned(counter_wait) + unsigned(sum));
+   counter_wait <= std_logic_vector(unsigned(counter_wait) + unsigned(sum));
 
-		ELSE
+  ELSE
 
-			counter_wait <= (others => '0');
+   counter_wait <= (others => '0');
 
-		END IF;
+  END IF;
 
-	END IF;
+ END IF;
 
 End PROCESS;
 
@@ -140,44 +140,44 @@ BEGIN
 
 IF (rising_edge(clk)) THEN
 
-	CASE current_state IS
+ CASE current_state IS
 
-		WHEN idle =>
+  WHEN idle =>
 
-			green_tmp <= '0';
+   green_tmp <= '0';
 
-			red_tmp <= '1';
-			
-			done_senha <= '0';
-		WHEN waiting_password=>
+   red_tmp <= '0';
+   
+   done_senha <= '0';
+  WHEN waiting_password=>
 
-			green_tmp <= '0';
+   green_tmp <= '0';
 
-			red_tmp <= '1';
+   red_tmp <= '1';
 
-		WHEN right_pass =>
+  WHEN right_pass =>
 
-			green_tmp <= '1';
+   green_tmp <= '1';
 
-			red_tmp <= '0';
-			
-			done_senha <= '1';
+   red_tmp <= '0';
+   
+   done_senha <= '1';
 
-		WHEN wrong_pass =>
+  WHEN wrong_pass =>
 
-			green_tmp <= '0';
+   green_tmp <= '0';
 
-			red_tmp <= '1';
-		
-		WHEN guest =>
-		
-			green_tmp <= '0';
+   red_tmp <= '1';
+  
+  WHEN guest =>
+  
+   green_tmp <= '0';
 
-			red_tmp <= '1';
-			
-			done_senha <= '1';
+   red_tmp <= '1';
+   
+   done_senha <= '1';
 
-		END CASE;
+  END CASE;
 
 END IF;
 
@@ -185,5 +185,5 @@ END PROCESS;
 
 red_led <= red_tmp;
 green_led <= green_tmp;
-	
+ 
 END TypeArchitecture;
